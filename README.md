@@ -1,93 +1,104 @@
-# Licenta
 
+# Integrare ESP32 + Python MQTT Bridge – Ghid complet pentru proiectul de Licență
 
+Acest proiect pune la dispoziție o soluție IoT completă pentru monitorizarea condițiilor de mediu, alcătuită din două componente fundamentale care comunică între ele folosind protocolul MQTT securizat.
 
-## Getting started
+## 🧠 Cum funcționează sistemul, pe scurt
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+- **ESP32_CODE:** O placă ESP32 echipată cu senzori (de exemplu BME280, MQ2, senzor de flacără) colectează date despre mediul înconjurător (temperatură, umiditate, presiune, nivel gaze, detecție foc). La intervale regulate, aceste date sunt publicate prin MQTT (pe topicuri separate pentru fiecare măsurătoare) către un broker MQTT securizat. Fiecare placă ESP32 poate avea un identificator propriu, pentru a permite diferențierea dispozitivelor în rețea.
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
+- **BRIDGE_CODE:** Un script Python care funcționează ca un "gateway software". Se conectează la același broker MQTT și ascultă topicurile publicate de ESP32-uri. Orice mesaj nou trimis de senzori este recepționat instant, iar datele pot fi afișate în consolă, salvate, sau procesate suplimentar (de exemplu trimitere alerte, integrare cu baze de date sau dashboard-uri). Toate datele de conectare și configurare sunt gestionate ușor, printr-un fișier `.env`.
 
-## Add your files
+**Integrarea acestor două componente permite colectarea, centralizarea și procesarea automată a informațiilor din mediul real, fiind baza unui sistem IoT scalabil, sigur și modern.**
 
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/topics/git/add_files/#add-files-to-a-git-repository) or push an existing Git repository with the following command:
+---
 
-```
-cd existing_repo
-git remote add origin https://gitlab.upt.ro/carina.takacs/licenta.git
-git branch -M main
-git push -uf origin main
-```
+## 1️⃣ Configurare și utilizare ESP32_CODE (cu PlatformIO)
 
-## Integrate with your tools
+**ESP32_CODE** este firmware-ul care trebuie încărcat pe placa ESP32. Acesta va citi datele de la senzori și le va transmite către brokerul MQTT.
 
-- [ ] [Set up project integrations](https://gitlab.upt.ro/carina.takacs/licenta/-/settings/integrations)
+### Pași de urmat:
 
-## Collaborate with your team
+1. **Pregătește mediul de dezvoltare:**
+   - Instalează [Visual Studio Code](https://code.visualstudio.com/) și extensia [PlatformIO IDE](https://platformio.org/install/ide?install=vscode).
+   - Descarcă folderul `ESP32_CODE` din proiect.
 
-- [ ] [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Set auto-merge](https://docs.gitlab.com/user/project/merge_requests/auto_merge/)
+2. **Deschide proiectul ESP32 în PlatformIO:**
+   - Deschide VSCode și selectează `Open Folder...`, apoi alege `ESP32_CODE`.
 
-## Test and Deploy
+3. **Configurează datele de conectare:**
+   - În fișierul `main.cpp`, setează:
+     - Numele și parola rețelei WiFi la care va fi conectat ESP32-ul.
+     - Adresa, portul și credentialele pentru brokerul MQTT.
+     - Un identificator unic pentru acest ESP32 (folosit în topicuri, pentru a-l diferenția de alte dispozitive din rețea).
+   - Dacă este nevoie, modifică viteza monitorului serial (baudrate) pentru debugging.
 
-Use the built-in continuous integration in GitLab.
+4. **Instalează dependențele:**
+   - Asigură-te că în fișierul `platformio.ini` există toate librăriile necesare pentru senzori și MQTT.
 
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
+5. **Conectează placa ESP32 la calculator prin USB.**
 
-***
+6. **Compilează și încarcă firmware-ul:**
+   - Folosește butonul “Upload” din PlatformIO, sau comanda corespunzătoare în terminal.
+   - Poți monitoriza funcționarea și mesajele de debug cu “Serial Monitor” din PlatformIO.
 
-# Editing this README
+7. **Rezultatul:**  
+   - ESP32 va începe să trimită automat datele colectate către brokerul MQTT, pe topicuri dedicate (de exemplu: `livingroom_1/temperature`, `livingroom_1/gas/alarm` etc).
 
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
+---
 
-## Suggestions for a good README
+## 2️⃣ Configurare și utilizare BRIDGE_CODE (Python MQTT Bridge)
 
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
+**BRIDGE_CODE** permite colectarea și vizualizarea datelor trimise de oricare (sau toate) ESP32-urile din rețea, folosind un script Python modern.
 
-## Name
-Choose a self-explaining name for your project.
+### Pași de urmat:
 
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
+1. **Deschide un terminal/command prompt în folderul `BRIDGE_CODE` din proiect.**
 
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
+2. **Creează și activează un mediu virtual Python:**
+   - Pentru Linux/Mac:
+     ```
+     python3 -m venv venv
+     source venv/bin/activate
+     ```
+   - Pentru Windows:
+     ```
+     python -m venv venv
+     venv\Scriptsctivate
+     ```
 
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
+3. **Instalează toate dependențele necesare:**
+   - Execută:
+     ```
+     pip install -r requirements.txt
+     ```
+   - Acest fișier conține, de exemplu, `paho-mqtt` (librărie MQTT) și `python-dotenv` (pentru gestionarea variabilelor din .env).
 
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
+4. **Configurează datele de acces la broker:**
+   - În fișierul `.env` din același folder, completează:
+     - adresa brokerului MQTT (aceeași folosită și de ESP32)
+     - portul, numele de utilizator și parola (dacă brokerul este securizat)
+   - Astfel, scriptul va folosi automat aceste date la fiecare pornire.
 
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
+5. **Pornește scriptul de bridge:**
+   - Rulează:
+     ```
+     python mqtt_subscriber.py
+     ```
+   - În consolă vei vedea în timp real toate datele transmise de ESP32, pe topicurile configurate.
 
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
+### Ce face concret bridge-ul Python?
 
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
+- Se conectează la brokerul MQTT folosind datele din `.env`.
+- Se abonează la topicurile relevante pentru unul sau mai multe ESP32-uri.
+- Afișează instant orice mesaj nou primit (de la orice dispozitiv), fiind ușor de extins pentru a salva datele, a trimite alerte sau a integra cu alte aplicații.
 
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
+---
 
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
+## 🧩 Concluzie
 
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
+Prin aceste două componente:
+- Obții o rețea de senzori automatizați (ESP32) ce transmit datele, în siguranță, către infrastructura centrală MQTT.
+- Ai un “gateway software” (Python bridge) pentru a colecta, vizualiza și prelucra aceste date – ușor de extins pentru orice aplicație de tip smart home, industrie, educație sau cercetare.
 
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
-
-## License
-For open source projects, say how it is licensed.
-
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+Dacă ai nevoie de clarificări suplimentare, de exemple de extindere, sau de integrare cu baze de date/grafice/alte sisteme – nu ezita să ceri!

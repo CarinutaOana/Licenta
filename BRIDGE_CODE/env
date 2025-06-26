@@ -1,0 +1,4 @@
+MQTT_BROKER=mqtt.carinatakacs.com
+MQTT_PORT=1883
+MQTT_USER=client
+MQTT_PASS=client12
